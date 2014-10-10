@@ -3,6 +3,7 @@
 
 import sys
 import optparse
+
 import requests
 import lxml.html
 
@@ -62,7 +63,7 @@ def _get_imdb_link(query_name):
                          '' % (query_name, search_url, e))
         return '', ''
 
-def _get_imdb_score(link):
+def _get_imdb_score_by_link(link):
     if not link:
         return -1.0
 
@@ -71,7 +72,7 @@ def _get_imdb_score(link):
         target = dom.cssselect('.star-box-giga-star')[0]
         return float(target.text)
     except Exception, e:
-        sys.stderr.write('ERROR: _get_imdb_score: link=%s e=%s\n' % (link, e))
+        sys.stderr.write('ERROR: _get_imdb_score_by_link: link=%s e=%s\n' % (link, e))
         return -1.0
 
 def _get_popular_movies():
@@ -101,6 +102,21 @@ def _get_english_name(link):
     except Exception, e:
         return ''
 
+def _get_movie(chinese_name, link):
+    english_name = _get_english_name(link)
+    _, imdb_link = _get_imdb_link(english_name)
+    score = _get_imdb_score_by_link(imdb_link)
+    return Movie(chinese_name, english_name, score, imdb_link)
+
+def _get_movies(popular_movies):
+    result = []
+    for chinese_name, link in popular_movies:
+        print u'Processing %s ...' % chinese_name,
+        movie = _get_movie(chinese_name, link)
+        print ' score=%.1f' % movie.score
+        result.append(movie)
+    return result
+
 def main():
     '''\
     %prog [options]
@@ -112,16 +128,8 @@ def main():
         parser.print_help()
         return 1
 
-    result = []
     popular_movies = _get_popular_movies()
-    for chinese_name, link in popular_movies:
-        print u'Processing %s ...' % chinese_name,
-        english_name = _get_english_name(link)
-        name, imdb_link = _get_imdb_link(english_name)
-        score = _get_imdb_score(imdb_link)
-        print ' score=%.1f' % score
-        result.append(Movie(chinese_name, english_name, score, imdb_link))
-
+    result = _get_movies(popular_movies)
     result.sort()
     for movie in result:
         print (u'%.1f: %s (%s) %s'
