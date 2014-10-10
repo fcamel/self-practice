@@ -1,6 +1,15 @@
 #!/usr/bin/env python
 # -*- encoding: utf8 -*-
 
+'''
+Show recent popular movies with IMDB scores.
+
+Practice:
+* Download web content by requests.
+* Extract html content by lxml CSS path.
+* Using multiprocessing to download web pages concurrently.
+'''
+
 import sys
 import optparse
 import multiprocessing
@@ -152,6 +161,7 @@ def main():
     #result = _get_movies(popular_movies)
     result = _get_movies_in_parallel(popular_movies)
     result.sort()
+    print '\n---- DONE ----\n'
     for movie in result:
         print (u'%.1f: %s (%s) %s'
                '' % (movie.score, movie.chinese_name,
@@ -162,4 +172,3 @@ def main():
 
 if __name__ == '__main__':
     sys.exit(main())
-
