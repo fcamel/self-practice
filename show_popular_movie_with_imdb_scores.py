@@ -3,6 +3,7 @@
 
 import sys
 import optparse
+import multiprocessing
 
 import requests
 import lxml.html
@@ -60,7 +61,7 @@ def _get_imdb_link(query_name):
         return name, link
     except Exception, e:
         sys.stderr.write('ERROR: _get_imdb_link: query_name=%s search_url=%s e=%s\n'
-                         '' % (query_name, search_url, e))
+                         '' % (query_name, search_url, str(e)))
         return '', ''
 
 def _get_imdb_score_by_link(link):
@@ -117,6 +118,25 @@ def _get_movies(popular_movies):
         result.append(movie)
     return result
 
+def _get_movie_and_save_in_queue(row):
+    chinese_name, link, queue = row
+    print u'Processing %s ...' % chinese_name,
+    movie = _get_movie(chinese_name, link)
+    print ' score=%.1f' % movie.score
+    queue.put(movie)
+
+
+def _get_movies_in_parallel(popular_movies):
+    manager = multiprocessing.Manager()
+    pool = multiprocessing.Pool(processes=10)
+    queue = manager.Queue()
+    data = [(chinese_name, link, queue) for chinese_name, link in popular_movies]
+    pool.map(_get_movie_and_save_in_queue, data)
+    result = []
+    while not queue.empty():
+        result.append(queue.get())
+    return result
+
 def main():
     '''\
     %prog [options]
@@ -129,7 +149,8 @@ def main():
         return 1
 
     popular_movies = _get_popular_movies()
-    result = _get_movies(popular_movies)
+    #result = _get_movies(popular_movies)
+    result = _get_movies_in_parallel(popular_movies)
     result.sort()
     for movie in result:
         print (u'%.1f: %s (%s) %s'
