@@ -10,6 +10,7 @@ Practice:
 * Using multiprocessing to download web pages concurrently.
 '''
 
+import datetime
 import sys
 import optparse
 import multiprocessing
@@ -157,9 +158,11 @@ def print_text(result):
 
 def print_html(result, filename):
     with open(filename, 'w') as fw:
+        updated_time = datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S')
         fw.write('''<!DOCTYPE>
 <html>
 <head>
+<title>台灣近期電影排行榜 (依IMDB分數)</title>
 <meta content="text/html; charset=UTF-8" http-equiv="Content-Type"/>
 <style>
 th, td {
@@ -177,7 +180,8 @@ th, td {
 </style>
 </head>
 <body>
-<table>\n''')
+<h4>最後更新時間: %s</h4>
+<table>\n''' % updated_time)
         fw.write('<tr class="heading"><th>中文片名</th><th>英文片名</th><th>IMDB 分數</th></tr>\n')
         cls = 'odd'
         for movie in result:
