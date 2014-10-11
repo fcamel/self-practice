@@ -13,6 +13,7 @@ Practice:
 import sys
 import optparse
 import multiprocessing
+import urllib
 
 import requests
 import lxml.html
@@ -58,7 +59,8 @@ def _get_imdb_link(query_name):
     if not query_name:
         return '', ''
 
-    search_url = 'http://www.imdb.com/find?ref_=nv_sr_fn&q=%s&s=tt' % query_name.replace(' ', '+')
+    search_url = ('http://www.imdb.com/find?ref_=nv_sr_fn&q=%s&s=tt'
+                  '' % urllib.quote(query_name.encode('utf8')))
     try:
         dom = _get_web_page(search_url)
         rs = dom.cssselect('.result_text')
