@@ -121,7 +121,7 @@ def _get_movie(chinese_name, link):
 def _get_movies(popular_movies):
     result = []
     for chinese_name, link in popular_movies:
-        print u'Processing %s ...' % chinese_name,
+        print 'Processing %s ...' % chinese_name.encode('utf8'),
         movie = _get_movie(chinese_name, link)
         print ' score=%.1f' % movie.score
         result.append(movie)
@@ -129,7 +129,7 @@ def _get_movies(popular_movies):
 
 def _get_movie_and_save_in_queue(row):
     chinese_name, link, queue = row
-    print u'Processing %s ...' % chinese_name,
+    print 'Processing %s ...' % chinese_name.encode('utf8'),
     movie = _get_movie(chinese_name, link)
     print ' score=%.1f' % movie.score
     queue.put(movie)
@@ -151,6 +151,9 @@ def main():
     %prog [options]
     '''
     parser = optparse.OptionParser(usage=main.__doc__)
+    parser.add_option('-H', '--html', dest='html',
+                      action='store_true', default=False,
+                      help='Output in HTML format (default: False).')
     options, args = parser.parse_args()
 
     if len(args) != 0:
@@ -163,9 +166,23 @@ def main():
     result.sort()
     print '\n---- DONE ----\n'
     for movie in result:
-        print (u'%.1f: %s (%s) %s'
-               '' % (movie.score, movie.chinese_name,
-                     movie.english_name, movie.imdb_link))
+        if options.html:
+            print '<table>'
+            print '<tr><th>中文片名</th><th>英文片名</th><th>IMDB 分數</th></tr>'
+            out = ('<tr><td>%s</td><td>%s<td><td><a href="%s">%.1f</a></td></tr>'
+                   '' % (movie.chinese_name, movie.english_name,
+                         movie.imdb_link, movie.score))
+            print out.encode('utf8')
+            print '</table>'
+        else:
+            try:
+                out = ('%.1f: %s (%s) %s'
+                       '' % (movie.score, movie.chinese_name,
+                             movie.english_name, movie.imdb_link))
+                print out.encode('utf8')
+            except Exception, e:
+                import ipdb
+                ipdb.set_trace()
 
     return 0
 
