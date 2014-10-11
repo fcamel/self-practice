@@ -146,14 +146,57 @@ def _get_movies_in_parallel(popular_movies):
         result.append(queue.get())
     return result
 
+def print_text(result):
+    for movie in result:
+        out = ('%.1f: %s (%s) %s'
+               '' % (movie.score, movie.chinese_name,
+                     movie.english_name, movie.imdb_link))
+        print out.encode('utf8')
+
+def print_html(result, filename):
+    with open(filename, 'w') as fw:
+        fw.write('''<!DOCTYPE>
+<html>
+<head>
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type"/>
+<style>
+th, td {
+    border: 1px solid grey;
+}
+.heading {
+    background-color: orange;
+}
+.odd {
+    background-color: rgb(190, 216, 190);
+}
+.even {
+    background-color: rgb(255, 255, 255);
+}
+</style>
+</head>
+<body>
+<table>\n''')
+        fw.write('<tr class="heading"><th>中文片名</th><th>英文片名</th><th>IMDB 分數</th></tr>\n')
+        cls = 'odd'
+        for movie in result:
+            out = ('<tr class="%s"><td>%s</td><td>%s</td><td><a href="%s">%.1f</a></td></tr>'
+                   '' % (cls, movie.chinese_name, movie.english_name,
+                         movie.imdb_link, movie.score))
+            fw.write(out.encode('utf8') + '\n')
+            cls = 'even' if cls == 'odd' else 'odd'
+        fw.write('''</table>
+</body>
+</html>\n''')
+
+
 def main():
     '''\
     %prog [options]
     '''
     parser = optparse.OptionParser(usage=main.__doc__)
     parser.add_option('-H', '--html', dest='html',
-                      action='store_true', default=False,
-                      help='Output in HTML format (default: False).')
+                      type='string', default='',
+                      help='Output in HTML format to the target file.')
     options, args = parser.parse_args()
 
     if len(args) != 0:
@@ -165,25 +208,10 @@ def main():
     result = _get_movies_in_parallel(popular_movies)
     result.sort()
     print '\n---- DONE ----\n'
-    for movie in result:
-        if options.html:
-            print '<table>'
-            print '<tr><th>中文片名</th><th>英文片名</th><th>IMDB 分數</th></tr>'
-            out = ('<tr><td>%s</td><td>%s<td><td><a href="%s">%.1f</a></td></tr>'
-                   '' % (movie.chinese_name, movie.english_name,
-                         movie.imdb_link, movie.score))
-            print out.encode('utf8')
-            print '</table>'
-        else:
-            try:
-                out = ('%.1f: %s (%s) %s'
-                       '' % (movie.score, movie.chinese_name,
-                             movie.english_name, movie.imdb_link))
-                print out.encode('utf8')
-            except Exception, e:
-                import ipdb
-                ipdb.set_trace()
-
+    if options.html:
+        print_html(result, options.html)
+    else:
+        print_text(result)
     return 0
 
 
