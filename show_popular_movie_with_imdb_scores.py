@@ -139,6 +139,7 @@ def _get_movie(chinese_name, link):
         score = _get_imdb_score(link, dom)
     else:
         score = -1.0
+        imdb_link = ''
     return Movie(chinese_name, english_name, score, imdb_link)
 
 def _get_movies(popular_movies):
