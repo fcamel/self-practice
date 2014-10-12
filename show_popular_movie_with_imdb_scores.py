@@ -76,17 +76,33 @@ def _get_imdb_link(query_name):
                          '' % (query_name, search_url, str(e)))
         return '', ''
 
-def _get_imdb_score_by_link(link):
+def _get_imdb_score(link, dom):
     if not link:
         return -1.0
 
     try:
-        dom = _get_web_page(link)
         target = dom.cssselect('.star-box-giga-star')[0]
         return float(target.text)
     except Exception, e:
-        sys.stderr.write('ERROR: _get_imdb_score_by_link: link=%s e=%s\n' % (link, e))
+        sys.stderr.write('ERROR: _get_imdb_score_by_dom: link=%s e=%s\n' % (link, e))
         return -1.0
+
+# A simple check about whether this movie is what we're looking for.
+# If it's not released in this or last year, it probably is not our target.
+# Test case:
+# * 桃蛙源記    The Frogville
+# * 迴光奏鳴曲  Exit
+def _verify_movie(chinese_name, english_name, dom):
+    this_year = int(datetime.datetime.now().strftime('%Y'))
+    try:
+        tmp = dom.cssselect('#title-overview-widget .header .nobr')[0]
+        target = tmp.getchildren()[0]
+        year = int(target.text)
+        return year == this_year or year == this_year - 1
+    except Exception, e:
+        sys.stderr.write('ERROR: _verify_movie: chinese_name=%s english_name=%s e=%s\n'
+                         '' % (chinese_name, english_name, e))
+        return False
 
 def _get_popular_movies():
     link_prefix = 'http://app.atmovies.com.tw/movie/'
@@ -118,7 +134,11 @@ def _get_english_name(link):
 def _get_movie(chinese_name, link):
     english_name = _get_english_name(link)
     _, imdb_link = _get_imdb_link(english_name)
-    score = _get_imdb_score_by_link(imdb_link)
+    dom = _get_web_page(imdb_link)
+    if _verify_movie(chinese_name, english_name, dom):
+        score = _get_imdb_score(link, dom)
+    else:
+        score = -1.0
     return Movie(chinese_name, english_name, score, imdb_link)
 
 def _get_movies(popular_movies):
