@@ -45,7 +45,7 @@ def _get_web_page(link):
     except Exception, e:
         if DEBUG:
             sys.stderr.write('Fail to get content of link: %s' % link)
-        return u''
+        return lxml.html.fromstring(u'')
 
 def _get_text_and_link(element):
     name = element.text.strip()
