@@ -7,6 +7,11 @@ import sys
 import optparse
 import os
 
+# Please update this list to fit your need.
+OBSERVERED_WORDS = [
+    'crash',
+    'freeze',
+]
 
 class Review(object):
     def __init__(self, version, language, created_time, last_updated_time, stars, title, text, link):
@@ -96,18 +101,13 @@ def main():
     # Count special words in reviews
     tmp = [r for r in all_reviews
            if r.language == 'en' and r.title and r.text and r.version == last_version]
-    observered_words = [
-        'crash',
-        'freeze',
-    ]
-
     counts = {}
-    for w in observered_words:
+    for w in OBSERVERED_WORDS:
         counts[w] = 0
     for r in tmp:
         title = r.title.lower()
         text = r.text.lower()
-        for w in observered_words:
+        for w in OBSERVERED_WORDS:
             if w in title or w in text:
                 counts[w] += 1
 
