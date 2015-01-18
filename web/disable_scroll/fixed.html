@@ -1,0 +1,110 @@
+<html>
+<head>
+  <title>main content fixed</title>
+  <style>
+    body {
+      margin: 0px;
+      padding: 0px;
+      position: relative;
+    }
+
+    #main {
+      background: linear-gradient(orange, white);
+      height: 4096px;
+      width: 1024px;
+    }
+
+    #popup {
+      height: 100%;
+      width: 100%;
+      /*
+        opacity also affects all child elements.
+        Use background to set opacity, so only this element is transparent.
+      */
+      background: rgba(0, 0, 0, 0.5);
+      /*
+        Set this as absolute + "body position: relative" is better than
+        setting this as "fixed" because "fixed" implies unscrollable.
+        In case that the element is longer than the window height,
+        it is still scrollable.
+
+        Note that this works because the page height just fit to the window height
+        and the scroll offset becomes (0, 0).
+      */
+      position: absolute;
+      top: 0px;
+      left: 0px;
+      /* with #popup-content, this adds a scroll bar in the pop-up content. */
+      overflow: auto;
+    }
+
+    #popup-content {
+      height: 2048px;
+      width: 100%;
+    }
+
+    #button_open {
+      width: 256px;
+      height: 256px;
+      position: fixed;
+      bottom: 0px;
+      left: 0px;
+      font-size: 36px;
+      background: #B7DEFF;
+    }
+
+    #button_close {
+      width: 256px;
+      height: 256px;
+      margin: 0 auto;
+      font-size: 36px;
+      background: #FFF;
+      position: relative;
+      top: 128px;
+    }
+  </style>
+</head>
+<body>
+  <div id='main'>
+    <div id='button_open'>
+      <a href="javascript:show_popup()">Click me to show pop-up box</a>
+    </div>
+  </div>
+  <div id='popup'>
+    <div id='popup-content'>
+      <div id='button_close'>
+        <a href="javascript:close_popup()">Click me to close pop-up box</a>
+      </div>
+    </div>
+  </div>
+  <script>
+    var main = document.getElementById('main');
+    var popup = document.getElementById('popup');
+    var scrollX = 0;
+    var scrollY = 0;
+    function show_popup() {
+      popup.style.display = 'block';
+      scrollX = window.pageXOffset || document.documentElement.scrollLeft;
+      scrollY = window.pageYOffset || document.documentElement.scrollTop,
+      /*
+        Set "fixed" and then the height becomes to fit to the window height.
+        and then the body height becomes window height.
+        You can observe the change by typing "document.body.scrollHeight" in DevTools console
+      */
+      main.style.position = 'fixed';
+      main.style.left = -scrollX;
+      main.style.top = -scrollY;
+    }
+
+    function close_popup() {
+      popup.style.display = 'none';
+      delete main.style.left;
+      delete main.style.top;
+      main.style.position = 'static';
+      window.scrollTo(scrollX, scrollY);
+    }
+
+    close_popup();
+  </script>
+</body>
+</html>

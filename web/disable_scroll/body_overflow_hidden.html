@@ -1,0 +1,89 @@
+<html>
+<head>
+  <title>Body overflow:hidden</title>
+  <style>
+    body {
+      margin: 0px;
+      padding: 0px;
+    }
+
+    #main {
+      background: linear-gradient(orange, white);
+      height: 4096px;
+      width: 1024px;
+    }
+
+    #popup {
+      height: 100%;
+      width: 100%;
+      /*
+        opacity also affects all child elements.
+        Use background to set opacity, so only this element is transparent.
+      */
+      background: rgba(0, 0, 0, 0.5);
+      /*
+        Must use "fixed" because after showing the pop-up,
+        the page height does not change and neither does the scroll offset.
+      */
+      position: fixed;
+      top: 0px;
+      left: 0px;
+      /* with #popup-content, this adds a scroll bar in the pop-up content. */
+      overflow: auto;
+    }
+
+    #popup-content {
+      height: 2048px;
+      width: 100%;
+    }
+
+    #button_open {
+      width: 256px;
+      height: 256px;
+      position: fixed;
+      bottom: 0px;
+      left: 0px;
+      font-size: 36px;
+      background: #B7DEFF;
+    }
+
+    #button_close {
+      width: 256px;
+      height: 256px;
+      font-size: 36px;
+      background: #FFF;
+      margin: 0 auto;
+      position: relative;
+      top: 128px;
+    }
+  </style>
+</head>
+<body>
+  <div id='main'>
+    <div id='button_open'>
+      <a href="javascript:show_popup()">Click me to show pop-up box</a>
+    </div>
+    <div id='popup'>
+      <div id='popup-content'>
+        <div id='button_close'>
+          <a href="javascript:close_popup()">Click me to close pop-up box</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    var popup = document.getElementById('popup');
+    function show_popup() {
+      popup.style.display = 'block';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function close_popup() {
+      popup.style.display = 'none';
+      document.body.style.overflow = 'visible';
+    }
+
+    close_popup();
+  </script>
+</body>
+</html>
