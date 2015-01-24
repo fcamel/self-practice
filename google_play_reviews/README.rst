@@ -15,12 +15,19 @@ Goal: cluster ratings of similar apps and see which apps
 have similar ratings.
 
 1. crawl:
-# Update __main__ in crawl_ratings.py
-# Then run it.
-$ python crawl_ratings.py > in
+
+Update __main__ in crawl_ratings.py. Then run it::
+
+  $ python crawl_ratings.py > in
+
 
 2. cluster:
-$ python cluster_ratings in 2
 
-For example:
-$ python cluster_ratings example.in 2
+Run K-Means on the ratings::
+
+  $ python cluster_ratings in 2
+
+
+For example::
+
+  $ python cluster_ratings example.in 2
