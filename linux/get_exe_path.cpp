@@ -10,9 +10,7 @@
 // same directory of the executable file.
 void GetExecutableDirectory(std::string& dir)
 {
-  pid_t pid = getpid();
-  char exe[64];
-  snprintf(exe, sizeof(exe), "/proc/%d/exe", pid);
+  const char* exe = "/proc/self/exe";
   char path[1024];
   ssize_t len = readlink(exe, path, sizeof(path));
   if (len == -1) {
