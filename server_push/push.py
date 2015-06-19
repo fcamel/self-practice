@@ -7,6 +7,7 @@ import tornado.locks
 import tornado.gen
 
 AUTORELOAD = True
+DEFAULT_TIMEOUT = 3600  # 1 hour.
 
 
 class Entry(object):
@@ -59,7 +60,7 @@ class GetHandler(tornado.web.RequestHandler):
     def post(self):
         '''
         Return the value of key |key|. Wait for the value for |timeout| seconds.
-        If |timeout| is not set, wait forever.
+        If |timeout| is not set, wait one hour.
         '''
         global g_cache
 
@@ -87,15 +88,12 @@ class GetHandler(tornado.web.RequestHandler):
                     return
 
         # Wait the data to be ready.
-        timeout = self.get_argument("timeout", None)
-        if timeout:
-            try:
-                timeout = float(timeout)
-                if timeout > 0:
-                    timeout += now
-            except Exception, e:
-                logging.exception('timeout is invalid.')
-                timeout = None
+        timeout = self.get_argument("timeout", DEFAULT_TIMEOUT)
+        try:
+            timeout = now + float(timeout)
+        except Exception, e:
+            logging.exception('timeout is invalid.')
+            timeout = now + DEFAULT_TIMEOUT
 
         condition = entry.get_condition()
         try:
