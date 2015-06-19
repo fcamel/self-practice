@@ -39,6 +39,9 @@ class Entry(object):
     def get_value(self):
         return self._value
 
+    def remove_value(self):
+        self._value = self._expired = None
+
 
 g_cache = {}
 
@@ -69,13 +72,19 @@ class GetHandler(tornado.web.RequestHandler):
         if not entry:
             entry = g_cache[key] = Entry()
 
-        value = entry.get_value()
-        if value is not None:
-            self.write(json.dumps({
-                'error_code': ERROR_OK,
-                'value': value,
-            }))
-            return
+        now = tornado.ioloop.IOLoop.current().time()
+        expired = entry.get_expired()
+        if expired is not None:
+            if expired < now:
+                entry.remove_value()
+            else:
+                value = entry.get_value()
+                if value is not None:
+                    self.write(json.dumps({
+                        'error_code': ERROR_OK,
+                        'value': value,
+                    }))
+                    return
 
         # Wait the data to be ready.
         timeout = self.get_argument("timeout", None)
@@ -83,7 +92,7 @@ class GetHandler(tornado.web.RequestHandler):
             try:
                 timeout = float(timeout)
                 if timeout > 0:
-                    timeout += tornado.ioloop.IOLoop.current().time()
+                    timeout += now
             except Exception, e:
                 logging.exception('timeout is invalid.')
                 timeout = None

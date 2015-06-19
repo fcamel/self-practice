@@ -77,6 +77,37 @@ class PushTest(unittest.TestCase):
         }
         self.assertEquals(expected, actual)
 
+    def testCannotGetExpiredValue(self):
+        # Set first.
+        key = 'some_key'
+        value = 'some_value'
+        data = {
+            'key': key,
+            'value': value,
+            'expired': -1,
+        }
+        self._send_http_request(self.url + '/set', data)
+
+        # Get latter.
+        data = {
+            'key': key,
+            'timeout': 0.1,
+        }
+        self._send_http_request(self.url + '/get', data)
+
+        # Run the codes.
+        tornado.ioloop.IOLoop.current().start()
+
+        # Verify responses.
+        self.assertEquals(2, len(self.responses))
+        self.assertEquals(200, self.responses[0].code)
+        self.assertEquals(200, self.responses[1].code)
+        actual = to_json(self.responses[1].body)
+        expected = {
+            'error_code': push.ERROR_TIMEOUT,
+        }
+        self.assertEquals(expected, actual)
+
     def testGetWithTimeout(self):
         key = 'not_exist'
         data = {
