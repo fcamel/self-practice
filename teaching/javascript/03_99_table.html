@@ -1,0 +1,39 @@
+<html>
+<head>
+<title>99 Table</title>
+<style>
+.cell {
+  float: left;
+  width: 80px;
+  height: 50px;
+  line-height: 50px;
+  border: 1px solid grey;
+  vertical-align: middle;
+  padding-left: 10px;
+}
+
+.row {
+  clear: both;
+}
+</style>
+</head>
+<body>
+<div id="main">
+</div>
+<script src="http://code.jquery.com/jquery-2.1.4.min.js"></script>
+<script>
+
+var $main = $('#main');
+for (var i = 1; i <= 9; i++) {
+  var row = document.createElement("div");
+  $row = $(row).addClass('row');
+  for (var j = 1; j <= 9; j++) {
+    var cell = document.createElement("div");
+    var $cell = $(cell).addClass('cell').html('' + i + ' * ' + j + ' = ' + (i * j));
+    $row.append($cell);
+  }
+  $main.append($row);
+}
+</script>
+</body>
+</html>

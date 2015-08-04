@@ -1,0 +1,27 @@
+<html>
+<head>
+<style>
+.cell {
+    width: 100px;
+    height: 100px;
+    border: 1px solid grey;
+    float: left;
+    font-size: 84px;
+    text-align: center;
+}
+
+</style>
+</head>
+<body>
+<div id="accounter" class="cell"></div>
+<script>
+var n = 0;
+function count() {
+    n += 1;
+    this.innerHTML = n;
+}
+
+document.getElementById('accounter').onclick = count;
+</script>
+</body>
+</html>
