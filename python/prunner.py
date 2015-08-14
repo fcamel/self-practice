@@ -15,18 +15,15 @@ import time
 __author__ = 'fcamel'
 
 
-class ScopeCount(object):
-    def __init__(self, lock, count):
-        self._lock = lock
-        self._count = count
+class ScopeActive(object):
+    def __init__(self, is_active):
+        self._is_active = is_active
 
     def __enter__(self):
-        with ScopeLock(self._lock):
-            self._count.value += 1
+        self._is_active.value = 1
 
     def __exit__(self, type_, value, traceback):
-        with ScopeLock(self._lock):
-            self._count.value -= 1
+        self._is_active.value = 0
 
 
 class ScopeLock(object):
@@ -92,15 +89,11 @@ class ParallelTaskRunner(object):
 
         # Start workers (they are both consumers and producers).
         processes = []
+        active_flags = []
         for _ in xrange(self._n_process):
-            args = (
-                manager,
-                lock,
-                queue,
-                dict_,
-                n_active_worker,
-            )
-            p = multiprocessing.Process(target=self.main, args=args)
+            is_active = manager.Value('i', 0)
+            active_flags.append(is_active)
+            p = multiprocessing.Process(target=self.main, args=[is_active])
             try:
                 p.start()
             except Exception, _:
@@ -126,33 +119,36 @@ class ParallelTaskRunner(object):
                 sys.stderr.write(msg)
                 p.join(0.1)
 
-                with ScopeLock(lock):
-                    if (n_active_worker.value <= 0 and queue.empty()):
-                        # When there is only one task in the queue,
-                        # there is a very short period that there is also
-                        # no worker. Wait a while to ensure all tasks
-                        # are really done.
-                        time.sleep(0.1)
-                        if (n_active_worker.value <= 0 and queue.empty()):
-                            # There is neither active worker nor data in queue.
-                            # Notify all workers to stop.
-                            for i in xrange(len(processes)):
-                                queue.put(None)
+                if self.is_done(active_flags, self.queue):
+                    # There is neither active worker nor data in queue.
+                    # Notify all workers to stop.
+                    for i in xrange(len(processes)):
+                        queue.put(None)
 
         self.end()
 
-    def main(self, manager, lock, queue, dict_, n_active_worker):
-        self.manager = manager
-        self.lock = lock
-        self.queue = queue
-        self.dict_ = dict_
-
+    def main(self, is_active):
         while True:
-            task = queue.get()
+            task = self.queue.get()
             if not task:
                 break
-            with ScopeCount(lock, n_active_worker):
+            with ScopeActive(is_active):
                 try:
                     self.run(task)
                 except Exception, _:
                     logging.exception('?')
+
+    @staticmethod
+    def is_done(active_flags, queue):
+        for _ in xrange(3):
+            if not queue.empty():
+                return False
+            # Reading is_active is not async safe, but it's okay.
+            for is_active in active_flags:
+                if is_active.value:
+                    return False
+            # When there is only one task in the queue, there is a very
+            # short period that there is also no worker. Wait a while
+            # to ensure all tasks are really done.
+            time.sleep(0.1)
+        return True
