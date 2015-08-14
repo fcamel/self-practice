@@ -90,13 +90,13 @@ class ParallelTaskRunner(object):
         active_flags = []
         for _ in xrange(self._n_process):
             is_active = manager.Value('i', 0)
-            active_flags.append(is_active)
             p = multiprocessing.Process(target=self.main, args=[is_active])
             try:
                 p.start()
             except Exception, _:
                 logging.exception('?')
                 continue
+            active_flags.append(is_active)
             processes.append(p)
 
         # Wait all workers to stop.
