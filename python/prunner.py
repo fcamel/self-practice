@@ -75,14 +75,12 @@ class ParallelTaskRunner(object):
         lock = manager.Lock()
         queue = manager.Queue()
         dict_ = manager.dict()
-        n_active_worker = manager.Value('i', 0)
 
         # Set member fields first.
         self.manager = manager
         self.lock = lock
         self.queue = queue
         self.dict_ = dict_
-        self.n_active_worker = n_active_worker
 
         # Put initial value to queue.
         self.begin(self._options)
@@ -108,18 +106,17 @@ class ParallelTaskRunner(object):
                     processes.remove(p)
                     continue
 
-                with ScopeLock(lock):
-                    naw = n_active_worker.value
+                p.join(0.1)
+
+                done, naw = self.is_done(active_flags, self.queue)
                 msg = (
                     '> pid=%d: # of process=%d, # of active worker=%d, '
                     'queue.qsize=%d\n'
-                    '' % (os.getpid(), len(processes),
-                          naw, queue.qsize())
+                    '' % (os.getpid(), len(processes), naw, queue.qsize())
                 )
                 sys.stderr.write(msg)
-                p.join(0.1)
 
-                if self.is_done(active_flags, self.queue):
+                if done:
                     # There is neither active worker nor data in queue.
                     # Notify all workers to stop.
                     for i in xrange(len(processes)):
@@ -140,15 +137,18 @@ class ParallelTaskRunner(object):
 
     @staticmethod
     def is_done(active_flags, queue):
-        for _ in xrange(3):
-            if not queue.empty():
-                return False
+        retry = 2
+        while True:
             # Reading is_active is not async safe, but it's okay.
-            for is_active in active_flags:
-                if is_active.value:
-                    return False
+            naw = sum(is_active.value for is_active in active_flags)
+            if naw > 0 or not queue.empty():
+                return False, naw
             # When there is only one task in the queue, there is a very
             # short period that there is also no worker. Wait a while
             # to ensure all tasks are really done.
-            time.sleep(0.1)
-        return True
+            if retry > 0:
+                retry -= 1
+                time.sleep(0.1)
+            else:
+                break
+        return True, 0
