@@ -53,6 +53,7 @@ class ParallelTaskRunner(object):
     * self.lock: when accessing self.dict_,
                  use self.lock to avoid race condition.
     * self.manager: create shared variables via self.manager when need.
+      Ref. https://docs.python.org/2/library/multiprocessing.html#sharing-state-between-processes
     '''
     def __init__(self, n_process, debug, options):
         self._options = options
@@ -143,7 +144,7 @@ class ParallelTaskRunner(object):
             naw = sum(is_active.value for is_active in active_flags)
             if naw > 0 or not queue.empty():
                 return False, naw
-            # When there is only one task in the queue, there is a very
+            # When there is only one task in the queue, there may be a very
             # short period that there is also no worker. Wait a while
             # to ensure all tasks are really done.
             if retry > 0:
