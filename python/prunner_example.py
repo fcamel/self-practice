@@ -18,7 +18,7 @@ TASK_SUM = 'task_sum'
 class MyRunner(prunner.ParallelTaskRunner):
     def begin(self, options):
         self.dict_['sum'] = 0
-        self.queue.put(prunner.Task(TASK_INIT, range(100)))
+        self.queue.put(prunner.Task(TASK_INIT, range(2000)))
 
     def run(self, task):
         if task.label == TASK_INIT:
