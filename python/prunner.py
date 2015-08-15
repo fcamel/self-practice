@@ -196,25 +196,25 @@ class ParallelMethodTaskRunner(ParallelTaskRunner):
     def __init__(self):
         pass
 
-    def init(self, n_process, debug, runner):
+    def init(self, n_process, debug, begin_func, end_func):
         '''
         n_process: the number of processes to use.
         debug: whether run in debug mode.
-        runner: an object which implements begin() and end() and use
-                prunner.post_task() to add more tasks.
         '''
         super(ParallelMethodTaskRunner, self).__init__(n_process, debug, None)
-        self._runner = runner
+        self._begin_func = begin_func
+        self._end_func = end_func
 
     def begin(self, options):
-        self._runner.begin()
+        if self._begin_func:
+            self._begin_func()
 
     def run(self, task):
         apply(task.method, task.args, task.kwargs)
 
     def end(self):
-        if hasattr(self._runner, 'end'):
-            self._runner.end()
+        if self._end_func:
+            self._end_func()
 
     def post_task(self, *args, **kwargs):
         '''

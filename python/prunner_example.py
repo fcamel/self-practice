@@ -4,8 +4,6 @@
 '''
 The script calculates sum((i + 1) * 2) in a stupid way.
 Just an example to show how to use ParallelTaskRunner directly.
-
-This runs a little faster.
 '''
 
 import optparse

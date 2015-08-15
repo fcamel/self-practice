@@ -5,7 +5,8 @@
 The script calculates sum((i + 1) * 2) in a stupid way.
 Just an example to show how to use prunner's high level API.
 
-This is easier to use and as fast as prunner_example.py.
+This is easier to use but run a little slower because it serializes MyRunner
+many times implicitly.
 '''
 
 import optparse
@@ -17,27 +18,31 @@ import prunner
 __author__ = 'fcamel'
 
 
-def begin():
-    prunner.get_dict()['sum'] = 0
-    prunner.post_task(init, range(2000))
+class MyRunner(object):
+    def __init__(self, options):
+        self._options = options
 
-def init(numbers):
-    for i in numbers:
-        prunner.post_task(add_one, i)
+    def begin(self):
+        prunner.get_dict()['sum'] = 0
+        prunner.post_task(self.init, range(2000))
 
-def add_one(n):
-    prunner.post_task(double, n + 1)
+    def init(self, numbers):
+        for i in numbers:
+            prunner.post_task(self.add_one, i)
 
-def double(n):
-    prunner.post_task(sum_up, n)
-    prunner.post_task(sum_up, n)
+    def add_one(self, n):
+        prunner.post_task(self.double, n + 1)
 
-def sum_up(n):
-    with prunner.global_lock():
-        prunner.get_dict()['sum'] += n
+    def double(self, n):
+        prunner.post_task(self.sum_up, n)
+        prunner.post_task(self.sum_up, n)
 
-def end():
-    print prunner.get_dict()['sum']
+    def sum_up(self, n):
+        with prunner.global_lock():
+            prunner.get_dict()['sum'] += n
+
+    def end(self):
+        print prunner.get_dict()['sum']
 
 
 def main():
@@ -56,7 +61,8 @@ def main():
         parser.print_help()
         return 1
 
-    prunner.init(options.n_process, options.debug, begin, end)
+    runner = MyRunner(options)
+    prunner.init(options.n_process, options.debug, runner.begin, runner.end)
     prunner.start()
 
     return 0
