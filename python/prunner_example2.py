@@ -7,15 +7,7 @@ Just an example to show how to use prunner's high level API.
 
 This is easier to use and as fast as prunner_example.py.
 '''
-
-import optparse
-import sys
-
 import prunner
-
-
-__author__ = 'fcamel'
-
 
 def begin():
     prunner.get_dict()['sum'] = 0
@@ -39,28 +31,5 @@ def sum_up(n):
 def end():
     print prunner.get_dict()['sum']
 
-
-def main():
-    '''\
-    %prog [options]
-    '''
-    parser = optparse.OptionParser(usage=main.__doc__)
-    parser.add_option('-n', '--nprocess', dest='n_process', type=int,
-                      help='# of process (default: 10).', default=10)
-    parser.add_option('-d', '--debug', dest='debug',
-                      action='store_true', default=False,
-                      help='Enable debug mode (default: False).')
-    options, args = parser.parse_args()
-
-    if len(args) != 0:
-        parser.print_help()
-        return 1
-
-    prunner.init(options.n_process, options.debug, begin, end)
-    prunner.start()
-
-    return 0
-
-
-if __name__ == '__main__':
-    sys.exit(main())
+prunner.init(10, False, begin, end)
+prunner.start()

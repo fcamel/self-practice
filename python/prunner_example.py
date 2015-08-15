@@ -6,14 +6,7 @@ The script calculates sum((i + 1) * 2) in a stupid way.
 Just an example to show how to use ParallelTaskRunner directly.
 '''
 
-import optparse
-import sys
-
 import prunner
-
-
-__author__ = 'fcamel'
-
 
 TASK_INIT = 'task_init'
 TASK_ADD_ONE = 'task_add_one'
@@ -48,27 +41,5 @@ class MyRunner(prunner.ParallelTaskRunner):
         print self.dict_['sum']
 
 
-def main():
-    '''\
-    %prog [options]
-    '''
-    parser = optparse.OptionParser(usage=main.__doc__)
-    parser.add_option('-n', '--nprocess', dest='n_process', type=int,
-                      help='# of process (default: 10).', default=10)
-    parser.add_option('-d', '--debug', dest='debug',
-                      action='store_true', default=False,
-                      help='Enable debug mode (default: False).')
-    options, args = parser.parse_args()
-
-    if len(args) != 0:
-        parser.print_help()
-        return 1
-
-    runner = MyRunner(options.n_process, options.debug, options)
-    runner.start()
-
-    return 0
-
-
-if __name__ == '__main__':
-    sys.exit(main())
+runner = MyRunner(10, False, None)
+runner.start()

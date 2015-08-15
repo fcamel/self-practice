@@ -9,13 +9,7 @@ This is easier to use but run a little slower because it serializes MyRunner
 many times implicitly.
 '''
 
-import optparse
-import sys
-
 import prunner
-
-
-__author__ = 'fcamel'
 
 
 class MyRunner(object):
@@ -45,28 +39,6 @@ class MyRunner(object):
         print prunner.get_dict()['sum']
 
 
-def main():
-    '''\
-    %prog [options]
-    '''
-    parser = optparse.OptionParser(usage=main.__doc__)
-    parser.add_option('-n', '--nprocess', dest='n_process', type=int,
-                      help='# of process (default: 10).', default=10)
-    parser.add_option('-d', '--debug', dest='debug',
-                      action='store_true', default=False,
-                      help='Enable debug mode (default: False).')
-    options, args = parser.parse_args()
-
-    if len(args) != 0:
-        parser.print_help()
-        return 1
-
-    runner = MyRunner(options)
-    prunner.init(options.n_process, options.debug, runner.begin, runner.end)
-    prunner.start()
-
-    return 0
-
-
-if __name__ == '__main__':
-    sys.exit(main())
+runner = MyRunner(None)
+prunner.init(10, False, runner.begin, runner.end)
+prunner.start()
