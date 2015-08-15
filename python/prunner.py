@@ -2,19 +2,24 @@
 '''
 Parallel Runner: run your tasks in parallel.
 
-See prunner_example.py to know how to use it.
+See prunner_example.py or prunner_example2.py to know how to use it.
 '''
 
+import copy_reg
 import logging
 import multiprocessing
 import os
 import sys
 import time
+import types
 
 
 __author__ = 'fcamel'
 
 
+#---------------------------------------------------------------------
+# Basic function
+#---------------------------------------------------------------------
 class ScopeActive(object):
     def __init__(self, is_active):
         self._is_active = is_active
@@ -91,7 +96,7 @@ class ParallelTaskRunner(object):
         active_flags = []
         for _ in xrange(self._n_process):
             is_active = manager.Value('i', 0)
-            p = multiprocessing.Process(target=self.main, args=[is_active])
+            p = multiprocessing.Process(target=self._main, args=[is_active])
             try:
                 p.start()
             except Exception, _:
@@ -125,7 +130,7 @@ class ParallelTaskRunner(object):
 
         self.end()
 
-    def main(self, is_active):
+    def _main(self, is_active):
         while True:
             task = self.queue.get()
             if not task:
@@ -153,3 +158,89 @@ class ParallelTaskRunner(object):
             else:
                 break
         return True, 0
+
+#---------------------------------------------------------------------
+# Advanced function: put/get methods to the queue.
+#---------------------------------------------------------------------
+
+# We need to define how to pickle instance methods because
+# Python 2.x cannot pickle them by default.
+# Ref.: http://stackoverflow.com/a/27320254/278456
+def _reduce_method(m):
+    if m.im_self is None:
+        return getattr, (m.im_class, m.im_func.func_name)
+    else:
+        return getattr, (m.im_self, m.im_func.func_name)
+copy_reg.pickle(types.MethodType, _reduce_method)
+
+
+class MethodTask(object):
+    def __init__(self, method, args, kwargs):
+        self.method = method
+        self.args = args
+        self.kwargs = kwargs
+
+
+class ParallelMethodTaskRunner(ParallelTaskRunner):
+    '''
+    Provide a message-loop-like interface to run methods among multi processes.
+
+    Note that ParallelMethodTaskRunner and ParallelTaskRunner cannot be picked
+    because they have special members that cannot be picked (e.g., SyncManager
+    and special objects from multiprocessing.Manager).
+
+    Thus, we ask the caller to provide a clean runner which implements begin(),
+    end() and its own methods. The runner accesses shared objects via the
+    public API of the module prunner.
+    '''
+    def __init__(self):
+        pass
+
+    def init(self, n_process, debug, runner):
+        '''
+        n_process: the number of processes to use.
+        debug: whether run in debug mode.
+        runner: an object which implements begin() and end() and use
+                prunner.post_task() to add more tasks.
+        '''
+        super(ParallelMethodTaskRunner, self).__init__(n_process, debug, None)
+        self._runner = runner
+
+    def begin(self, options):
+        self._runner.begin()
+
+    def run(self, task):
+        apply(task.method, task.args, task.kwargs)
+
+    def end(self):
+        if hasattr(self._runner, 'end'):
+            self._runner.end()
+
+    def post_task(self, *args, **kwargs):
+        '''
+        args[0] is the method and args[1:] is the rest of arguments.
+        Will run "args[0](*args[1:], **kwargs)" when any process is available.
+        '''
+        task = MethodTask(args[0], args[1:], kwargs)
+        self.queue.put(task)
+
+
+_pmtrunner = ParallelMethodTaskRunner()
+
+def init(*args, **kwargs):
+    _pmtrunner.init(*args, **kwargs)
+
+def start(*args, **kwargs):
+    _pmtrunner.start(*args, **kwargs)
+
+def post_task(*args, **kwargs):
+    _pmtrunner.post_task(*args, **kwargs)
+
+def get_dict():
+    return _pmtrunner.dict_
+
+def global_lock():
+    return ScopeLock(_pmtrunner.lock)
+
+def get_manaager():
+    return _pmtrunner.manager
