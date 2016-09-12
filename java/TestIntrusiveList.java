@@ -1,161 +1,36 @@
-//------------------------------------------------------------------------------
-// Intrusive List
-//
-// Just demostrate the concept. No strict test and protection for incorrect usages.
-//------------------------------------------------------------------------------
+import fc.Node;
+import fc.NodeValue;
+import fc.IntrusiveList;
 
-// T is the target class which manages by List.
-interface NodeValue<T>
+class ItemNode extends Node<Item>
 {
-    // If you want to be stored in multiple lists,
-    // use identifier to distinguish the lists.
-    Node<T> GetNode(String identifier);
-}
-
-// The inernal implementation for List.
-class Node<T>
-{
-    private T value;
-    private Node<T> next;
-    private Node<T> prev;
-
-    Node(T value)
+    ItemNode(Item value)
     {
-        this.value = value;
-    }
-
-    void InsertBefore(Node<T> node)
-    {
-        if (node == null) {
-            return;
-        }
-        if (prev != null)
-            prev.next = node;
-        node.prev = prev;
-        node.next = this;
-        prev = node;
-    }
-
-    void InsertAfter(Node<T> node)
-    {
-        if (node == null) {
-            return;
-        }
-        node.next = next;
-        if (next != null)
-            next.prev = node;
-        next = node;
-        node.prev = this;
-    }
-
-    void Delete()
-    {
-        if (prev != null)
-            prev.next = next;
-        if (next != null)
-            next.prev = prev;
-    }
-
-    Node<T> GetNext()
-    {
-        return next;
-    }
-
-    Node<T> GetPrev()
-    {
-        return prev;
-    }
-
-    T GetValue()
-    {
-        return value;
+        super(value);
     }
 }
-
-// IntrusiveList.
-class List<T>
-{
-    private Node<T> head;
-    private Node<T> tail;
-    String identifier;
-
-    List(String identifier) {
-        this.identifier = identifier;
-    }
-
-    Node<T> Head() {
-        return head;
-    }
-
-    Node<T> Tail() {
-        return tail;
-    }
-
-    void Append(NodeValue<T> value) {
-        Node<T> node = value.GetNode(identifier);
-        if (tail == null) {
-            head = tail = node;
-            return;
-        }
-        tail.InsertAfter(node);
-        tail = node;
-    }
-
-    void InsertBefore(NodeValue<T> base, NodeValue<T> newValue) {
-        Node<T> newNode = newValue.GetNode(identifier);
-        Node<T> baseNode = base.GetNode(identifier);
-
-        newNode.Delete();
-        baseNode.InsertBefore(newNode);
-        if (baseNode == head)
-            head = newNode;
-    }
-
-    void InsertAfter(NodeValue<T> base, NodeValue<T> newValue) {
-        Node<T> newNode = newValue.GetNode(identifier);
-        Node<T> baseNode = base.GetNode(identifier);
-
-        newNode.Delete();
-        baseNode.InsertAfter(newNode);
-        if (baseNode == tail)
-            tail = newNode;
-    }
-
-    void Delete(NodeValue<T> value) {
-        Node<T> node = value.GetNode(identifier);
-        Node<T> next = node.GetNext();
-        Node<T> prev = node.GetPrev();
-
-        node.Delete();
-
-        if (node == head) {
-            head = next;
-        }
-        if (node == tail) {
-            tail = prev;
-        }
-    }
-
-    boolean Empty() {
-        return head == null;
-    }
-}
-
-//------------------------------------------------------------------------------
-// End of IntrusiveList
-//------------------------------------------------------------------------------
 
 class Item implements NodeValue<Item>
 {
-    private Node<Item> node1;
-    private Node<Item> node2;
+    // Indicate which list the item is stored.
+    // With two identifiers, the item can be stored at most two lists.
+    static int LIST_ID_DEFAULT = 0;
+    static int LIST_ID_ANOTHER = 1;
+
+    // Instead of using ArrayList, using array to reduce the access overhread.
+    // However, Java doesn't support arrays of generic classes.
+    // We need to create a subclass to workaround this.
+    // See http://stackoverflow.com/a/7131673/278456
+    private final ItemNode[] nodes;
     private String value;
 
     Item(String value)
     {
         this.value = value;
-        node1 = new Node<Item>(this);
-        node2 = new Node<Item>(this);
+        nodes = new ItemNode[2];
+        for (int i = 0; i < nodes.length; i++) {
+            nodes[i] = new ItemNode(this);
+        }
     }
 
     String GetValue()
@@ -164,21 +39,16 @@ class Item implements NodeValue<Item>
     }
 
     @Override
-    public Node<Item> GetNode(String identifier)
+    public Node<Item> GetNode(int identifier)
     {
-        // NOTE: Just demonstrate that it can be put in more than one list.
-        // If you'd like to support many lists, use a Map to store Node<Item>.
-        if (identifier == "another")
-            return node1;
-        else
-            return node2;
+        return nodes[identifier];
     }
 }
 
 
 public class TestIntrusiveList
 {
-    static void OutputList(List<Item> list) {
+    static void OutputList(IntrusiveList<Item> list) {
         Node<Item> current = list.Head();
         boolean first = true;
         while (current != null) {
@@ -193,9 +63,7 @@ public class TestIntrusiveList
     }
 
     public static void main(String[] args) {
-        // The identifier "default" and "another" below are defined in Item.
-        // We need to expose the info to access the corresponding Node<Item> inside Item.
-        List<Item> list = new List<Item>("default");
+        IntrusiveList<Item> list = new IntrusiveList<Item>(Item.LIST_ID_DEFAULT);
         Item a = new Item("a");
         Item b = new Item("b");
         Item c = new Item("c");
@@ -210,8 +78,8 @@ public class TestIntrusiveList
         System.out.println("Init");
         OutputList(list);
 
-        c.GetNode("default").Delete();
-        d.GetNode("default").Delete();
+        c.GetNode(Item.LIST_ID_DEFAULT).Delete();
+        d.GetNode(Item.LIST_ID_DEFAULT).Delete();
         System.out.println("Delete c and d");
         OutputList(list);
 
@@ -225,7 +93,7 @@ public class TestIntrusiveList
         OutputList(list);
 
         System.out.println("Create another list with \"c d e\"");
-        List<Item> list2 = new List<Item>("another");
+        IntrusiveList<Item> list2 = new IntrusiveList<Item>(Item.LIST_ID_ANOTHER);
         list2.Append(c);
         list2.Append(d);
         list2.Append(e);
