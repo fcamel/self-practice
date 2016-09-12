@@ -1,12 +1,12 @@
 package fc;
 
-public class Node<T>
+public class ILNode<T>
 {
     private T value;
-    private Node<T> next;
-    private Node<T> prev;
+    private ILNode<T> next;
+    private ILNode<T> prev;
 
-    public Node(T value)
+    public ILNode(T value)
     {
         this.value = value;
     }
@@ -16,12 +16,12 @@ public class Node<T>
         return value;
     }
 
-    public Node<T> GetNext()
+    public ILNode<T> GetNext()
     {
         return next;
     }
 
-    public Node<T> GetPrev()
+    public ILNode<T> GetPrev()
     {
         return prev;
     }
@@ -39,7 +39,7 @@ public class Node<T>
     //-----------------------------------------------------
 
     // Hide this from the users to keep the states in IntrusiveList correct.
-    void InsertBefore(Node<T> node)
+    void InsertBefore(ILNode<T> node)
     {
         if (node == null) {
             return;
@@ -52,7 +52,7 @@ public class Node<T>
     }
 
     // Hide this from the users to keep the states in IntrusiveList correct.
-    void InsertAfter(Node<T> node)
+    void InsertAfter(ILNode<T> node)
     {
         if (node == null) {
             return;

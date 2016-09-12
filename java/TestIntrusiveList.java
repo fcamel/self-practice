@@ -1,16 +1,16 @@
-import fc.Node;
-import fc.NodeValue;
+import fc.ILNode;
+import fc.ILNodeValue;
 import fc.IntrusiveList;
 
-class ItemNode extends Node<Item>
+class Node extends ILNode<Item>
 {
-    ItemNode(Item value)
+    Node(Item value)
     {
         super(value);
     }
 }
 
-class Item implements NodeValue<Item>
+class Item implements ILNodeValue<Item>
 {
     // Indicate which list the item is stored.
     // With two identifiers, the item can be stored at most two lists.
@@ -21,15 +21,15 @@ class Item implements NodeValue<Item>
     // However, Java doesn't support arrays of generic classes.
     // We need to create a subclass to workaround this.
     // See http://stackoverflow.com/a/7131673/278456
-    private final ItemNode[] nodes;
+    private final Node[] nodes;
     private String value;
 
     Item(String value)
     {
         this.value = value;
-        nodes = new ItemNode[2];
+        nodes = new Node[2];
         for (int i = 0; i < nodes.length; i++) {
-            nodes[i] = new ItemNode(this);
+            nodes[i] = new Node(this);
         }
     }
 
@@ -39,7 +39,7 @@ class Item implements NodeValue<Item>
     }
 
     @Override
-    public Node<Item> GetNode(int identifier)
+    public ILNode<Item> GetNode(int identifier)
     {
         return nodes[identifier];
     }
@@ -49,7 +49,7 @@ class Item implements NodeValue<Item>
 public class TestIntrusiveList
 {
     static void OutputList(IntrusiveList<Item> list) {
-        Node<Item> current = list.Head();
+        ILNode<Item> current = list.Head();
         boolean first = true;
         while (current != null) {
             if (!first) {
