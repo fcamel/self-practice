@@ -68,7 +68,6 @@ int popcount_3(uint64_t x)
 int count_by_bit_operation(uint16_t* data, int size)
 {
     int sum = 0;
-    uint64_t* p = nullptr;
     for (int i = 0; i < size - 4; i += 4) {
         sum += popcount_3(*(uint64_t*)&data[i]);
     }
