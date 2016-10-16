@@ -4,6 +4,9 @@
 #include <chrono>
 #include <iostream>
 
+// Comment out this if your CPU doesn't support SSE4.
+#define SUPPORT_SSE4
+
 const int kMax = 1 << 16;
 
 void prepare_input(uint16_t* data, int size)
@@ -68,14 +71,61 @@ int popcount_3(uint64_t x)
 int count_by_bit_operation(uint16_t* data, int size)
 {
     int sum = 0;
-    for (int i = 0; i < size - 4; i += 4) {
+    int i = 0;
+    for (; i <= size - 4; i += 4) {
         sum += popcount_3(*(uint64_t*)&data[i]);
     }
-    for (int i = (size - 4 > 0 ? size - 4 : 0); i < size; i++) {
+    for (; i < size; i++) {
         sum += s_table[ data[i] ];
     }
     return sum;
 }
+
+//-------------------------------------------------------------------------------
+// SSE4 popcnt.
+//-------------------------------------------------------------------------------
+
+#ifdef SUPPORT_SSE4
+// Copied and modified from https://github.com/WojciechMula/sse-popcount
+// -> builtin-popcnt-unrolled-errata-manual.
+//
+// Here's a version that doesn't rely on the compiler not doing
+// bad optimizations.
+// This code is from Alex Yee.
+int count_by_popcnt(uint16_t* data, int size)
+{
+    uint64_t cnt[4];
+    for (int i = 0; i < 4; ++i) {
+        cnt[i] = 0;
+    }
+    uint64_t* p = (uint64_t*)data;
+    int pSize = size / 4;
+
+    int i = 0;
+    for (; i <= pSize - 4; i += 4) {
+        __asm__ __volatile__(
+            "popcnt %4, %4  \n\t"
+            "add %4, %0     \n\t"
+            "popcnt %5, %5  \n\t"
+            "add %5, %1     \n\t"
+            "popcnt %6, %6  \n\t"
+            "add %6, %2     \n\t"
+            "popcnt %7, %7  \n\t"
+            "add %7, %3     \n\t"
+            : "+r" (cnt[0]), "+r" (cnt[1]), "+r" (cnt[2]), "+r" (cnt[3])
+            : "r"  (p[i]), "r"  (p[i+1]), "r"  (p[i+2]), "r"  (p[i+3])
+        );
+    }
+    int sum = cnt[0] + cnt[1] + cnt[2] + cnt[3];
+
+    // Handle the rest.
+    i = i * 4;
+    for (; i < size; i++) {
+        sum += s_table[ data[i] ];
+    }
+    return sum;
+}
+#endif
 
 //-------------------------------------------------------------------------------
 
@@ -107,6 +157,9 @@ int main(void)
 
     test("count_by_table        ", count_by_table, data, kDataSize);
     test("count_by_bit_operation", count_by_bit_operation, data, kDataSize);
+#ifdef SUPPORT_SSE4
+    test("count_by_popcnt       ", count_by_popcnt, data, kDataSize);
+#endif
 
     return 0;
 }
