@@ -7,19 +7,20 @@
 // Comment out this if your CPU doesn't support SSE4.
 #define SUPPORT_SSE4
 
-const int kMax = 1 << 16;
+const int kMax8 = 1 << 8;
+const int kMax16 = 1 << 16;
 
 void prepare_input(uint16_t* data, int size)
 {
     for (int i = 0 ; i < size; i++) {
-        data[i] = rand() % kMax;
+        data[i] = rand() % kMax16;
     }
 }
 
 //-------------------------------------------------------------------------------
 // Direct count.
 //-------------------------------------------------------------------------------
-int count(uint16_t a)
+int count16(uint16_t a)
 {
     int n = 0;
     for (int i = 0; i < 16; i++) {
@@ -29,11 +30,23 @@ int count(uint16_t a)
     return n;
 }
 
-int s_table[kMax];
-void prepare_bit_count_table()
+int count_directly(uint16_t* data, int size)
 {
-    for (int i = 0; i < kMax; i++) {
-        s_table[i] = count(i);
+    int sum = 0;
+    for (int i = 0; i < size; i++) {
+        sum += count16(data[i]);
+    }
+    return sum;
+}
+
+//-------------------------------------------------------------------------------
+// Lookup table.
+//-------------------------------------------------------------------------------
+int s_table16[kMax16];
+void prepare_bit_count_table16()
+{
+    for (int i = 0; i < kMax16; i++) {
+        s_table16[i] = count16(i);
     }
 }
 
@@ -41,7 +54,38 @@ int count_by_table(uint16_t* data, int size)
 {
     int sum = 0;
     for (int i = 0; i < size; i++) {
-        sum += s_table[ data[i] ];
+        sum += s_table16[ data[i] ];
+    }
+    return sum;
+}
+
+//-------------------------------------------------------------------------------
+
+int count8(uint8_t a)
+{
+    int n = 0;
+    for (int i = 0; i < 8; i++) {
+        n += a & 1;
+        a >>= 1;
+    }
+    return n;
+}
+
+uint8_t s_table8[kMax8];
+void prepare_bit_count_table8()
+{
+    for (int i = 0; i < kMax8; i++) {
+        s_table8[i] = count8(i);
+    }
+}
+
+int count_by_table8(uint16_t* data, int size)
+{
+    int sum = 0;
+    size *= 2;
+    uint8_t* p = (uint8_t*)data;
+    for (int i = 0; i < size; i++) {
+        sum += s_table8[ p[i] ];
     }
     return sum;
 }
@@ -76,7 +120,7 @@ int count_by_bit_operation(uint16_t* data, int size)
         sum += popcount_3(*(uint64_t*)&data[i]);
     }
     for (; i < size; i++) {
-        sum += s_table[ data[i] ];
+        sum += s_table16[ data[i] ];
     }
     return sum;
 }
@@ -121,12 +165,14 @@ int count_by_popcnt(uint16_t* data, int size)
     // Handle the rest.
     i = i * 4;
     for (; i < size; i++) {
-        sum += s_table[ data[i] ];
+        sum += s_table16[ data[i] ];
     }
     return sum;
 }
 #endif
 
+//-------------------------------------------------------------------------------
+// main.
 //-------------------------------------------------------------------------------
 
 void test(const char* name, int (*func)(uint16_t* data, int size), uint16_t* data, int size)
@@ -141,7 +187,7 @@ void test(const char* name, int (*func)(uint16_t* data, int size), uint16_t* dat
 
     std::cout << name << ": sum=" << sum << ", duration="
         << std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count()
-        << "ns" << std::endl;
+        << " ns" << std::endl;
 }
 
 int main(void)
@@ -152,10 +198,13 @@ int main(void)
 
     srand(time(NULL));
 
-    prepare_bit_count_table();
+    prepare_bit_count_table8();
+    prepare_bit_count_table16();
     prepare_input(data, kDataSize);
 
+    test("count_directly        ", count_directly, data, kDataSize);
     test("count_by_table        ", count_by_table, data, kDataSize);
+    test("count_by_table8       ", count_by_table8, data, kDataSize);
     test("count_by_bit_operation", count_by_bit_operation, data, kDataSize);
 #ifdef SUPPORT_SSE4
     test("count_by_popcnt       ", count_by_popcnt, data, kDataSize);
