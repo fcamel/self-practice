@@ -25,7 +25,7 @@ def test(nround: int, t: int, n: int, k: int) -> float:
         success += int(draw(t, n, k))
     return float(success) / nround
 
-def main():
+def main() -> int:
     '''\
     %prog [options] <nround> <ntimes> <nitem> <kitem>
 
@@ -67,8 +67,9 @@ def main():
         parser.print_help()
         return 1
 
-    args = map(int, args)
-    print("%.04f" % test(*args))
+    new_args = map(int, args)
+    percentage = test(*new_args)
+    print("%.04f" % percentage)
 
     return 0
 
