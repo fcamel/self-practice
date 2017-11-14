@@ -29,20 +29,18 @@ void help(char *prog) {
   printf("%s <is_server> <ip:port> <nagle> <delayed_ack> <cork> <msg_more> <send_bytes> <n_chunk> <round>\n", prog);
 }
 
-void config_socket(int sock, Config config) {
+void show_mss(int sock) {
   int value = -1;
-  /*
-  int length = 0;
+  int length = sizeof(value);
   if (getsockopt(sock, IPPROTO_TCP, TCP_MAXSEG, &value, &length) == -1)
     ERROR();
-  printf("The original MSS=%d, set it as 1024", value);
-  */
+  printf("MSS=%d\n", value);
+}
 
-  value = 1024;
-  if (setsockopt(sock, IPPROTO_TCP, TCP_MAXSEG, &value, sizeof(value)) == -1)
-    ERROR();
+void config_socket(int sock, Config config) {
+  show_mss(sock);
 
-  value = config.nagle ? 0 : 1;
+  int value = config.nagle ? 0 : 1;
   if (setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, &value, sizeof(value)) == -1)
     ERROR();
 
@@ -131,6 +129,8 @@ void do_server(char* ip, int port, Config config, int send_bytes, int n_chunk, i
   if (client_socket < 0)
     ERROR();
 
+  show_mss(client_socket);
+
   struct timeval begin, end;
   gettimeofday(&begin, NULL);
   for (int i = 0; i < round; i++) {
@@ -140,6 +140,8 @@ void do_server(char* ip, int port, Config config, int send_bytes, int n_chunk, i
   gettimeofday(&end, NULL);
   double seconds = (end.tv_sec - begin.tv_sec) + (end.tv_usec - begin.tv_usec) / 1e6;
   printf("server: send + recv time in seconds: %.3f\n", seconds);
+
+  show_mss(client_socket);
 
   close(server_socket);
 }
@@ -197,7 +199,7 @@ int main(int argc, char *argv[]) {
   int n_chunk = atoi(argv[8]);
   int round = atoi(argv[9]);
 
-  printf("server=%s:%d\n", ip, port);
+  printf("server=%s:%d, pid=%d\n", ip, port, getpid());
   printf("config: nagle=%d, delayed_ack=%d, cork=%d, msg_more=%d, send=%d %d %d\n\n",
          config.nagle, config.delayed_ack, config.cork, config.msg_more, send_bytes, n_chunk, round);
 
