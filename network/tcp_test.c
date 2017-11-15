@@ -26,7 +26,52 @@ typedef struct Config {
 } Config;
 
 void help(char *prog) {
-  printf("%s <is_server> <ip:port> <nagle> <delayed_ack> <cork> <msg_more> <send_bytes> <n_chunk> <round>\n", prog);
+  printf("%s <is_server> <ip:port> <config>\n", prog);
+}
+
+int parse_config(char* filename, Config* config, int* send_bytes, int* n_chunk, int* round) {
+  if (!filename || !config || !send_bytes || !n_chunk || !round)
+    return 0;
+
+  FILE* fr = fopen(filename, "r");
+  if (!fr) {
+    printf("Failed to read file: %s\n", filename);
+    return 0;
+  }
+
+  char buf[1024];
+  char key[1024];
+  int value = 0;
+  while (1) {
+    if (!fgets(buf, sizeof(buf), fr))
+      return 1;
+
+    if (sscanf(buf, "%s%d", key, &value) == 2) {
+      if (strcmp(key, "nagle") == 0) {
+        config->nagle = value;
+      } else if (strcmp(key, "delayed_ack") == 0) {
+        config->delayed_ack = value;
+      } else if (strcmp(key, "cork") == 0) {
+        config->cork = value;
+      } else if (strcmp(key, "msg_more") == 0) {
+        config->msg_more = value;
+      } else if (strcmp(key, "send") == 0) {
+        *send_bytes = value;
+      } else if (strcmp(key, "n_chunk") == 0) {
+        *n_chunk = value;
+      } else if (strcmp(key, "round") == 0) {
+        *round = value;
+      } else {
+        printf("Skip unknown key: %s\n", key);
+      }
+    } else {
+      printf("Invalid format: %s\n", buf);
+      return 1;
+    }
+  }
+
+  fclose(fr);
+  return 1;
 }
 
 void show_mss(int sock) {
@@ -177,7 +222,7 @@ void do_client(char* ip, int port, Config config, int send_bytes, int n_chunk) {
 }
 
 int main(int argc, char *argv[]) {
-  if (argc != 10) {
+  if (argc != 4) {
     help(argv[0]);
     return 0;
   }
@@ -190,14 +235,14 @@ int main(int argc, char *argv[]) {
   strcpy(ip, strtok(tmp, ":"));
   port = atoi(strtok(NULL, ":"));
 
+  int send_bytes = 0;
+  int n_chunk = 0;
+  int round = 0;
   Config config;
-  config.nagle = atoi(argv[3]);
-  config.delayed_ack = atoi(argv[4]);
-  config.cork = atoi(argv[5]);
-  config.msg_more = atoi(argv[6]);
-  int send_bytes = atoi(argv[7]);
-  int n_chunk = atoi(argv[8]);
-  int round = atoi(argv[9]);
+  if (!parse_config(argv[3], &config, &send_bytes, &n_chunk, &round)) {
+    help(argv[0]);
+    return 1;
+  }
 
   printf("server=%s:%d, pid=%d\n", ip, port, getpid());
   printf("config: nagle=%d, delayed_ack=%d, cork=%d, msg_more=%d, send=%d %d %d\n\n",
