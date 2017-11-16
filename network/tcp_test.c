@@ -19,8 +19,8 @@
 #define VERBOSE
 
 typedef struct Config {
-  bool nagle;
-  bool delayed_ack;
+  bool no_delay;
+  bool quickack;
   bool cork;
   bool msg_more;
 } Config;
@@ -47,10 +47,10 @@ int parse_config(char* filename, Config* config, int* send_bytes, int* n_chunk, 
       return 1;
 
     if (sscanf(buf, "%s%d", key, &value) == 2) {
-      if (strcmp(key, "nagle") == 0) {
-        config->nagle = value;
-      } else if (strcmp(key, "delayed_ack") == 0) {
-        config->delayed_ack = value;
+      if (strcmp(key, "no_delay") == 0) {
+        config->no_delay = value;
+      } else if (strcmp(key, "quickack") == 0) {
+        config->quickack = value;
       } else if (strcmp(key, "cork") == 0) {
         config->cork = value;
       } else if (strcmp(key, "msg_more") == 0) {
@@ -85,11 +85,11 @@ void show_mss(int sock) {
 void config_socket(int sock, Config config) {
   show_mss(sock);
 
-  int value = config.nagle ? 0 : 1;
+  int value = config.no_delay ? 1 : 0;
   if (setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, &value, sizeof(value)) == -1)
     ERROR();
 
-  value = config.delayed_ack ? 0 : 1;
+  value = config.quickack ? 1 : 0;
   if (setsockopt(sock, IPPROTO_TCP, TCP_QUICKACK, &value, sizeof(value)) == -1)
     ERROR();
 
@@ -245,8 +245,8 @@ int main(int argc, char *argv[]) {
   }
 
   printf("server=%s:%d, pid=%d\n", ip, port, getpid());
-  printf("config: nagle=%d, delayed_ack=%d, cork=%d, msg_more=%d, send=%d %d %d\n\n",
-         config.nagle, config.delayed_ack, config.cork, config.msg_more, send_bytes, n_chunk, round);
+  printf("config: no_delay=%d, quickack=%d, cork=%d, msg_more=%d, send=%d %d %d\n\n",
+         config.no_delay, config.quickack, config.cork, config.msg_more, send_bytes, n_chunk, round);
 
   if (is_server) {
     do_server(ip, port, config, send_bytes, n_chunk, round);
