@@ -29,6 +29,16 @@ void help(char *prog) {
   printf("%s <is_server> <ip:port> <config>\n", prog);
 }
 
+/* Example of config:
+
+no_delay 0
+quickack 0
+cork 0
+msg_more 0
+send 1000
+n_chunk 100
+round 100
+*/
 int parse_config(char* filename, Config* config, int* send_bytes, int* n_chunk, int* round) {
   if (!filename || !config || !send_bytes || !n_chunk || !round)
     return 0;
