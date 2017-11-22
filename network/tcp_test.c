@@ -137,7 +137,7 @@ void send_data(int sock, Config config, int bytes, int n_chunk) {
 
 bool recv_data(int sock) {
   while (true) {
-    char buf[1024];
+    char buf[1024*1024];
     int n = recv(sock, buf, sizeof(buf) , 0);
 
 #ifdef VERBOSE
