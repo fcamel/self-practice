@@ -1,0 +1,26 @@
+Memo
+----
+CPU: iMac, Intel Core i7 4Ghz
+
+Median of three times
+
+$ time ./nqueen 16
+14772512
+
+real    1m1.592s
+user    1m1.418s
+sys     0m0.098s
+
+$ time ./nqueen_with_cut 16
+14772512
+
+real    1m18.768s
+user    1m18.589s
+sys     0m0.098s
+
+$ time ./nqueen_with_stack 16
+14772512
+
+real    1m0.469s
+user    1m0.337s
+sys     0m0.071s
