@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 int nqueen(uint16_t col, uint16_t left, uint64_t right, uint16_t target) {
-	uint16_t m = ~(col | left |right);
+	uint16_t m = ~(col | left |right) & target;
 	int c = 0;
 	for (uint32_t b = m & -m; b; m ^= b, b = m & -m) {
 		if ((b | col) == target) return 1;
