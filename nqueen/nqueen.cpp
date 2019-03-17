@@ -3,11 +3,12 @@
 const int MAX = 20;
 
 int n;
+int count;
 bool cols[MAX];
 bool diag[MAX];  // col + row
 bool diag2[MAX];  // col - row + (n - 1)
 
-void nqueen(int row, int *count) {
+void nqueen(int row) {
   for (int col = 0; col < n; col++) {
     if (cols[col])
       continue;
@@ -18,12 +19,12 @@ void nqueen(int row, int *count) {
 
     // Check before entering the next depth. This is faster.
     if (row + 1 == n) {
-      (*count)++;
+      count++;
       return;
     }
 
     cols[col] = diag[col+row] = diag2[col-row+n-1] = true;
-    nqueen(row + 1, count);
+    nqueen(row + 1);
     cols[col] = diag[col+row] = diag2[col-row+n-1] = false;
   }
 }
@@ -32,8 +33,7 @@ int main(int argc, char *argv[]) {
   if (argc != 2)
     return 1;
   n = atoi(argv[1]);
-  int count = 0;
-  nqueen(0, &count);
+  nqueen(0);
   printf("%d\n", count);
   return 0;
 }

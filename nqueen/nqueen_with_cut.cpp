@@ -3,6 +3,7 @@
 const int MAX = 20;
 
 int n;
+int count;
 bool cols[MAX];
 bool diag[MAX];  // col + row
 bool diag2[MAX];  // col - row + (n - 1)
@@ -17,7 +18,7 @@ int next[MAX];
 // 3rd version: use begins, ends, enxt      : 1.726s
 //
 // However, still slower than basic.cpp.
-void nqueen(int row, int begin, int end, int *count) {
+void nqueen(int row, int begin, int end) {
   bool run = true;
   for (int col = begin; run; col = next[col]) {
     //printf("debug: row=%d, [%d,%d] col=%d\n", row, begin, end, col);
@@ -31,12 +32,12 @@ void nqueen(int row, int begin, int end, int *count) {
     if (diag2[col-row+n-1])
       continue;
     if (row + 1 == n) {
-      (*count)++;
+      count++;
       return;
     }
 
     cols[col] = diag[col+row] = diag2[col-row+n-1] = true;
-    nqueen(row + 1, begins[col], ends[col], count);
+    nqueen(row + 1, begins[col], ends[col]);
     cols[col] = diag[col+row] = diag2[col-row+n-1] = false;
   }
 }
@@ -64,8 +65,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  int count = 0;
-  nqueen(0, 0, n-1, &count);
+  nqueen(0, 0, n-1);
   printf("%d\n", count);
   return 0;
 }
