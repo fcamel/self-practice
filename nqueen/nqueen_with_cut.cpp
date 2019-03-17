@@ -17,7 +17,7 @@ int next[MAX];
 // 3rd version: use begins, ends, enxt      : 1.726s
 //
 // However, still slower than basic.cpp.
-void solve(int row, int begin, int end, int *count) {
+void nqueen(int row, int begin, int end, int *count) {
   bool run = true;
   for (int col = begin; run; col = next[col]) {
     //printf("debug: row=%d, [%d,%d] col=%d\n", row, begin, end, col);
@@ -36,7 +36,7 @@ void solve(int row, int begin, int end, int *count) {
     }
 
     cols[col] = diag[col+row] = diag2[col-row+n-1] = true;
-    solve(row + 1, begins[col], ends[col], count);
+    nqueen(row + 1, begins[col], ends[col], count);
     cols[col] = diag[col+row] = diag2[col-row+n-1] = false;
   }
 }
@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
   }
 
   int count = 0;
-  solve(0, 0, n-1, &count);
+  nqueen(0, 0, n-1, &count);
   printf("%d\n", count);
   return 0;
 }

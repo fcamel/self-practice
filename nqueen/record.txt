@@ -24,3 +24,24 @@ $ time ./nqueen_with_stack 16
 real    1m0.469s
 user    1m0.337s
 sys     0m0.071s
+
+time ./nqueen_bit 16
+14772512
+
+real    0m28.360s
+user    0m28.304s
+sys     0m0.031s
+
+time ./nqueen_lsb 16
+14772512
+
+real    0m8.505s
+user    0m8.487s
+sys    0m0.010s
+
+time ./nqueen_lsb_stack 16
+14772512
+
+real    0m8.651s
+user    0m8.618s
+sys     0m0.012s

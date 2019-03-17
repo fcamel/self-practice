@@ -7,7 +7,7 @@ bool cols[MAX];
 bool diag[MAX];  // col + row
 bool diag2[MAX];  // col - row + (n - 1)
 
-int solve(int n) {
+int nqueen(int n) {
   int count = 0;
   int row = 0;
   stack[row] = -1;
@@ -50,6 +50,6 @@ int main(int argc, char *argv[]) {
   if (argc != 2)
     return 1;
   int n = atoi(argv[1]);
-  printf("%d\n", solve(n));
+  printf("%d\n", nqueen(n));
   return 0;
 }

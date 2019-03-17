@@ -7,7 +7,7 @@ bool cols[MAX];
 bool diag[MAX];  // col + row
 bool diag2[MAX];  // col - row + (n - 1)
 
-void solve(int row, int *count) {
+void nqueen(int row, int *count) {
   for (int col = 0; col < n; col++) {
     if (cols[col])
       continue;
@@ -23,7 +23,7 @@ void solve(int row, int *count) {
     }
 
     cols[col] = diag[col+row] = diag2[col-row+n-1] = true;
-    solve(row + 1, count);
+    nqueen(row + 1, count);
     cols[col] = diag[col+row] = diag2[col-row+n-1] = false;
   }
 }
@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
     return 1;
   n = atoi(argv[1]);
   int count = 0;
-  solve(0, &count);
+  nqueen(0, &count);
   printf("%d\n", count);
   return 0;
 }
