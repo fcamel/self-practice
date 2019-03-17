@@ -2,6 +2,14 @@ Memo
 ----
 CPU: iMac, Intel Core i7 4Ghz
 
+$ g++ --version
+Configured with: --prefix=/Library/Developer/CommandLineTools/usr --with-gxx-include-dir=/usr/include/c++/4.2.1
+Apple LLVM version 9.0.0 (clang-900.0.39.2)
+Target: x86_64-apple-darwin16.0.0
+Thread model: posix
+InstalledDir: /Library/Developer/CommandLineTools/usr/bin
+
+
 Median of three times
 
 $ time ./nqueen 16
